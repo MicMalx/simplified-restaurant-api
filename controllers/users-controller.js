@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const HttpError = require("../models/http-error");
 
-const User = require('../models/user');
+const users = [];
 
 const signup = async (req, res, next) => {
     const errors = validationResult(req);
@@ -12,20 +12,10 @@ const signup = async (req, res, next) => {
             new HttpError('Invalid inputs passed, please check your data.', 422)
         );
     }
+
     const { email, password } = req.body;
 
-    let existingUser;
-    try {
-        existingUser = await User.findOne({ email: email });
-    } catch (err) {
-        const error = new HttpError(
-            'Signing up failed, please try again later.',
-            500
-        );
-        return next(error);
-    }
-
-    if (existingUser) {
+    if (users.find(user => user.email === email)) {
         const error = new HttpError(
             'User with that email exists already, please login instead.',
             422
@@ -44,27 +34,19 @@ const signup = async (req, res, next) => {
         return next(error);
     }
 
-    const createdUser = new User({
+    const createdUser = {
         email,
         password: hashedPassword,
-        meals: [],
-    });
+        orders: [],
+    };
 
-    try {
-        await createdUser.save();
-    } catch (err) {
-        const error = new HttpError(
-            'Singing Up failed, please try again.',
-            500
-        );
-        return next(error);
-    }
+    users.push(createdUser);
 
     let token;
     try {
         token = jwt.sign(
-            { userId: createdUser.id, email: createdUser.email },
-            process.env.JWT_KEY,
+            { email: createdUser.email },
+            "test",
             { expiresIn: '1h' }
         );
     } catch (err) {
@@ -76,7 +58,6 @@ const signup = async (req, res, next) => {
     }
 
     res.status(201).json({
-        userId: createdUser.id,
         email: createdUser.email,
         token: token,
         expiresIn: 3600
@@ -86,17 +67,7 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
     const { email, password } = req.body;
 
-    let existingUser;
-    try {
-        existingUser = await User.findOne({ email: email });
-    } catch (err) {
-        const error = new HttpError(
-            'Loging in failed, please try again later.',
-            500
-        );
-        return next(error);
-    }
-
+    let existingUser = users.find(user => user.email === email);
     if (!existingUser) {
         const error = new HttpError(
             'Invalid credentials, could not log you in.',
@@ -127,8 +98,8 @@ const login = async (req, res, next) => {
     let token;
     try {
         token = jwt.sign(
-            { userId: existingUser.id, email: existingUser.email },
-            process.env.JWT_KEY,
+            { email: existingUser.email },
+            "test",
             { expiresIn: '1h' },
         );
     } catch (err) {
@@ -140,7 +111,6 @@ const login = async (req, res, next) => {
     }
 
     res.json({
-        userId: existingUser.id,
         email: existingUser.email,
         token: token,
         expiresIn: 3600,
@@ -149,3 +119,4 @@ const login = async (req, res, next) => {
 
 exports.signup = signup;
 exports.login = login;
+exports.users = users;

@@ -11,8 +11,8 @@ module.exports = (req, res, next) => {
         if (!token) {
             throw new Error('Authentication failed!');
         }
-        const decodedToken = jwt.verify(token, process.env.JWT_KEY);
-        req.userData = { userId: decodedToken.userId };
+        const decodedToken = jwt.verify(token, "test");
+        req.userData = { userEmail: decodedToken.email };
         next();
     } catch (err) {
         const error = new HttpError(

@@ -1,12 +1,10 @@
 const bodyParser = require('body-parser');
 const express = require('express');
-const mongoose = require('mongoose');
 const HttpError = require('./models/http-error');
 
 const mealsRoutes = require('./routes/meals-routes');
 const usersRoutes = require('./routes/users-routes');
 const ordersRoutes = require('./routes/orders-routes');
-
 
 const app = express();
 
@@ -38,9 +36,4 @@ app.use((error, req, res, next) => {
     res.json({ message: error.message } || 'An unknown error occurred!');
 });
 
-mongoose
-    .connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.oiaxvo8.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`)
-    .then(() => {
-        app.listen(5000);
-    })
-    .catch(err => {});
+app.listen(5000);
